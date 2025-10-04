@@ -19,6 +19,7 @@ const NavItems = () => {
             className={`hover:text-yellow-500 transition-colors ${
               isActive(href) ? "text-gray-100" : ""
             }`}
+            aria-current={isActive(href) ? "page" : undefined}
           >
             {title}
           </Link>

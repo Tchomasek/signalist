@@ -10,8 +10,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
-import { Button } from "./button";
 import { LogOut } from "lucide-react";
+import { Button } from "./ui/button";
 import NavItems from "./NavItems";
 
 const UserDropdown = () => {
@@ -28,7 +28,7 @@ const UserDropdown = () => {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="flex items-center gap-3 text-gray-4 hover:text-yellow-500"
+          className="flex items-center gap-3 text-gray-400 hover:text-yellow-500"
         >
           <Avatar className="h-8 w-8">
             <AvatarImage src="https://github.com/shadcn.png" />
