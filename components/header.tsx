@@ -1,9 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
-import NavItems from "../NavItems";
-import UserDropdown from "../UserDropdown";
+import NavItems from "./NavItems";
+import UserDropdown from "./UserDropdown";
 
-export default function Header() {
+export default function Header({ user }: { user: User }) {
   return (
     <header className="sticky top-0 header">
       <div className="container header-wrapper">
@@ -19,7 +19,7 @@ export default function Header() {
         <nav className="hidden sm:block">
           <NavItems />
         </nav>
-        <UserDropdown />
+        <UserDropdown user={user} />
       </div>
     </header>
   );
