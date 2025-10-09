@@ -28,14 +28,15 @@ export default function SearchCommand({
   const displayStocks = isSearchMode ? stocks : stocks?.slice(0, 10);
 
   useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        setOpen((v) => !v);
+        setOpen((open) => !open);
       }
     };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
   }, []);
 
   const handleSearch = async () => {
@@ -57,7 +58,7 @@ export default function SearchCommand({
 
   useEffect(() => {
     debouncedSearch();
-  }, [searchTerm]);
+  }, [searchTerm, debouncedSearch]);
 
   const handleSelectStock = () => {
     setOpen(false);
