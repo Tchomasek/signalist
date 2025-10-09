@@ -1,9 +1,20 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useTransition } from "react";
+import { toggleWatchlistItem } from "@/lib/actions/watchlist.actions";
 
 // Minimal WatchlistButton implementation to satisfy page requirements.
 // This component focuses on UI contract only. It toggles local state and
 // calls onWatchlistChange if provided. Styling hooks match globals.css.
+
+interface WatchlistButtonProps {
+  symbol: string;
+  company: string;
+  isInWatchlist?: boolean;
+  showTrashIcon?: boolean;
+  type?: "button" | "icon";
+  onWatchlistChange?: (symbol: string, isAdded: boolean) => void;
+  userId: string;
+}
 
 const WatchlistButton = ({
   symbol,
@@ -12,23 +23,36 @@ const WatchlistButton = ({
   showTrashIcon = false,
   type = "button",
   onWatchlistChange,
+  userId,
 }: WatchlistButtonProps) => {
   const [added, setAdded] = useState<boolean>(!!isInWatchlist);
+  const [isPending, startTransition] = useTransition();
 
   const label = useMemo(() => {
     if (type === "icon") return added ? "" : "";
     return added ? "Remove from Watchlist" : "Add to Watchlist";
   }, [added, type]);
 
-  const handleClick = () => {
-    const next = !added;
-    setAdded(next);
-    onWatchlistChange?.(symbol, next);
+  const handleClick = async () => {
+    console.log({ userId, symbol, company });
+    startTransition(() => {
+      setAdded(!added);
+    });
+
+    try {
+      const result = await toggleWatchlistItem({ userId, symbol, company });
+      onWatchlistChange?.(symbol, result.added);
+    } catch (error) {
+      console.error(error);
+      // Revert state if the API call fails
+      setAdded(added);
+    }
   };
 
   if (type === "icon") {
     return (
       <button
+        disabled={isPending}
         title={
           added
             ? `Remove ${symbol} from watchlist`
@@ -62,6 +86,7 @@ const WatchlistButton = ({
 
   return (
     <button
+      disabled={isPending}
       className={`watchlist-btn ${added ? "watchlist-remove" : ""}`}
       onClick={handleClick}
     >

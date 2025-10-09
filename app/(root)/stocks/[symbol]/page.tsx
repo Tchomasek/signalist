@@ -1,17 +1,39 @@
 import TradingViewWidget from "@/components/TradingViewWidget";
 import WatchlistButton from "@/components/WatchlistButton";
+import { getCompanyProfile } from "@/lib/actions/finnhub.actions";
+import { getWatchlistSymbolsByEmail } from "@/lib/actions/watchlist.actions";
+import { auth } from "@/lib/auth";
 import {
-  SYMBOL_INFO_WIDGET_CONFIG,
-  CANDLE_CHART_WIDGET_CONFIG,
   BASELINE_WIDGET_CONFIG,
-  TECHNICAL_ANALYSIS_WIDGET_CONFIG,
-  COMPANY_PROFILE_WIDGET_CONFIG,
+  CANDLE_CHART_WIDGET_CONFIG,
   COMPANY_FINANCIALS_WIDGET_CONFIG,
+  COMPANY_PROFILE_WIDGET_CONFIG,
+  SYMBOL_INFO_WIDGET_CONFIG,
+  TECHNICAL_ANALYSIS_WIDGET_CONFIG,
 } from "@/lib/constants";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 export default async function StockDetails({ params }: StockDetailsPageProps) {
-  const { symbol } = await params;
   const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
+
+  const { symbol } = await params;
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+  if (!session?.user) redirect("/sign-in");
+  const user = {
+    id: session.user.id,
+    name: session.user.name,
+    email: session.user.email,
+  };
+
+  const [watchlist, companyProfile] = await Promise.all([
+    getWatchlistSymbolsByEmail(user.email),
+    getCompanyProfile(symbol),
+  ]);
+
+  const isInWatchlist = watchlist.includes(symbol.toUpperCase());
 
   return (
     <div className="flex min-h-screen p-4 md:p-6 lg:p-8">
@@ -44,11 +66,13 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
           <div className="flex items-center justify-between">
             <WatchlistButton
               symbol={symbol.toUpperCase()}
-              company={symbol.toUpperCase()}
-              isInWatchlist={false}
+              company={companyProfile?.name || symbol.toUpperCase()}
+              isInWatchlist={isInWatchlist}
+              userId={user.id}
             />
           </div>
 
+          {symbol}
           <TradingViewWidget
             scriptUrl={`${scriptUrl}technical-analysis.js`}
             config={TECHNICAL_ANALYSIS_WIDGET_CONFIG(symbol)}

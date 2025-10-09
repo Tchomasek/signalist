@@ -96,6 +96,22 @@ declare global {
     result: FinnhubSearchResult[];
   };
 
+  type FinnhubQuote = {
+    c: number;
+    d: number;
+    dp: number;
+    h: number;
+    l: number;
+    o: number;
+    pc: number;
+  };
+
+  type CompanyProfile = {
+    name: string;
+    ticker: string;
+    exchange: string;
+  };
+
   type StockDetailsPageProps = {
     params: Promise<{
       symbol: string;
@@ -109,6 +125,7 @@ declare global {
     showTrashIcon?: boolean;
     type?: "button" | "icon";
     onWatchlistChange?: (symbol: string, isAdded: boolean) => void;
+    userId: string;
   };
 
   type QuoteData = {

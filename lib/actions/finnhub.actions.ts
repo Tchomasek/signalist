@@ -136,11 +136,11 @@ export const searchStocks = cache(
                 sym
               )}&token=${token}`;
               // Revalidate every hour
-              const profile = await fetchJSON<any>(url, 3600);
-              return { sym, profile } as { sym: string; profile: any };
+              const profile = await fetchJSON<CompanyProfile>(url, 3600);
+              return { sym, profile };
             } catch (e) {
               console.error("Error fetching profile2 for", sym, e);
-              return { sym, profile: null } as { sym: string; profile: any };
+              return { sym, profile: null };
             }
           })
         );
@@ -158,10 +158,8 @@ export const searchStocks = cache(
               displaySymbol: symbol,
               type: "Common Stock",
             };
-            // We don't include exchange in FinnhubSearchResult type, so carry via mapping later using profile
-            // To keep pipeline simple, attach exchange via closure map stage
-            // We'll reconstruct exchange when mapping to final type
-            (r as any).__exchange = exchange; // internal only
+            (r as FinnhubSearchResult & { __exchange?: string }).__exchange =
+              exchange; // internal only
             return r;
           })
           .filter((x): x is FinnhubSearchResult => Boolean(x));
@@ -179,9 +177,7 @@ export const searchStocks = cache(
           const name = r.description || upper;
           const exchangeFromDisplay =
             (r.displaySymbol as string | undefined) || undefined;
-          const exchangeFromProfile = (r as any).__exchange as
-            | string
-            | undefined;
+          const exchangeFromProfile = (r as FinnhubSearchResult & { __exchange?: string }).__exchange as string | undefined;
           const exchange = exchangeFromDisplay || exchangeFromProfile || "US";
           const type = r.type || "Stock";
           const item: StockWithWatchlistStatus = {
@@ -199,6 +195,54 @@ export const searchStocks = cache(
     } catch (err) {
       console.error("Error in stock search:", err);
       return [];
+    }
+  }
+);
+
+export const getCompanyProfile = cache(
+  async (
+    symbol: string
+  ): Promise<{ name: string; ticker: string; exchange: string } | null> => {
+    try {
+      const token = process.env.FINNHUB_API_KEY ?? NEXT_PUBLIC_FINNHUB_API_KEY;
+      if (!token || !symbol) {
+        return null;
+      }
+
+      const url = `${FINNHUB_BASE_URL}/stock/profile2?symbol=${encodeURIComponent(
+        symbol
+      )}&token=${token}`;
+      // Revalidate every hour
+      const profile = await fetchJSON<CompanyProfile>(url, 3600);
+      return {
+        name: profile?.name || profile?.ticker || symbol,
+        ticker: profile?.ticker || symbol,
+        exchange: profile?.exchange || "US",
+      };
+    } catch (err) {
+      console.error(`Error fetching company profile for ${symbol}:`, err);
+      return null;
+    }
+  }
+);
+
+export const getQuote = cache(
+  async (symbol: string): Promise<FinnhubQuote | null> => {
+    try {
+      const token = process.env.FINNHUB_API_KEY ?? NEXT_PUBLIC_FINNHUB_API_KEY;
+      if (!token || !symbol) {
+        return null;
+      }
+
+      const url = `${FINNHUB_BASE_URL}/quote?symbol=${encodeURIComponent(
+        symbol
+      )}&token=${token}`;
+      // Revalidate every minute
+      const quote = await fetchJSON<FinnhubQuote>(url, 60);
+      return quote;
+    } catch (err) {
+      console.error(`Error fetching quote for ${symbol}:`, err);
+      return null;
     }
   }
 );

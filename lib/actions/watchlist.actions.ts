@@ -30,3 +30,34 @@ export async function getWatchlistSymbolsByEmail(
     return [];
   }
 }
+
+export async function toggleWatchlistItem({
+  userId,
+  symbol,
+  company,
+}: {
+  userId: string;
+  symbol: string;
+  company: string;
+}) {
+  if (!userId || !symbol || !company) {
+    throw new Error("Missing required fields");
+  }
+
+  try {
+    await connectToDatabase();
+
+    const existingItem = await Watchlist.findOne({ userId, symbol });
+
+    if (existingItem) {
+      await Watchlist.deleteOne({ _id: existingItem._id });
+      return { added: false };
+    } else {
+      await Watchlist.create({ userId, symbol, company });
+      return { added: true };
+    }
+  } catch (err) {
+    console.error("toggleWatchlistItem error:", err);
+    throw new Error("Failed to update watchlist");
+  }
+}
